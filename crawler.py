@@ -1,40 +1,44 @@
+#coding=utf-8
 import requests
 from bs4 import BeautifulSoup
 import lxml
 import time
-res = requests.get("http://www.babyhome.com.tw/mboard/list.php?style=baby&page=1")
-soup = BeautifulSoup(res.text, 'lxml')
-#print soup
 
-n=5
-a_id=0;
-for i in range(1,n):
-	res = requests.get("http://www.babyhome.com.tw/mboard/list.php?style=baby&page="+str(i))
-	soup = BeautifulSoup(res.text, 'lxml')
-	print res.text
-	for tr in soup.find_all("tr"):
-		if (tr['class'] ==  ['span_thread', ''] and tr.find('a')!=None):
-			article_name = str(tr.find('a').get('title').encode('utf8'))
-			print article_name
-			href =  tr.find('a').get('href')
-			sub_res = requests.get("http://www.babyhome.com.tw/mboard/"+href)
-			sub_soup = BeautifulSoup(sub_res.text, 'lxml')
-			result = sub_soup.find("div", class_="comment_content")
-	 		s = ""
-			for t in result.find_all('p'):
-				t.replaceWith('') 
-				s+= t.get_text()
-
-			#create file
-			try:
-				f = open("articles/"+str(a_id)+"_"+article_name+".txt", "w")
-			except:
-				print "File Open Error"
-				continue
-			else:
-				 f.write(s.encode('utf8'))
-			a_id+=1
+s_page=0
+for p in range(s_page,1000):
+	res = requests.get("http://hospital.kingnet.com.tw/free/consulting.html?start="+str(p*10)+"&department=14&outpatient=generally")
+	res.encoding = 'Big5' #website_encode
+	soup = BeautifulSoup(res.text, 'lxml') #extractor
+	span=soup.find_all('font', 'medicine03')
+	num=0
+	for r in span:
+        	num+=1
+	#write string
+	string=""
+	i=0
+	print str(p)
+	for r in span:
+		i+=1
+		if(i==1):
+			continue
+		if(i>=num-2):
+			break
+		target="症狀："
+		target1="補充說明："
+		if(r.get_text()==target.decode('utf8')):
+			if(i!=2):
+				string+="\n"
+			string+=r.parent.find('span').get_text()
+		if(r.get_text()==target1.decode('utf8')):
+			string+=r.parent.find('span').get_text()
+	#create & write file
+        try:
+                f = open("articles/"+"page"+str(p)+".txt", "w")
+        except:
+                print "File Open Error"
+                continue
+        else:
+                f.write(string.encode('utf8'))
+		f.close()
 		
-
-
 
